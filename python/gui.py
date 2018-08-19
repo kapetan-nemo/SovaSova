@@ -11,6 +11,7 @@ class MainWindow(QMainWindow):
 
         # Структура окно -> центральный виджет -> один из переключаемых виджетов -> локальный layout ->
         # локальные sublayout и widgets
+        self.setWindowTitle("SovaSova")
         self.central_widget = QStackedWidget()
         self.setCentralWidget(self.central_widget)
 
@@ -64,7 +65,7 @@ class ToursQuestWindow(QWidget):
         layout.addWidget(self.button, 2, 0)
 
         self.setLayout(layout)
-
+        print(layout.sizeHint())
 
 class ResultsTable(QWidget):
     def __init__(self, parent=None, game_name="", tours=3, questions=12):
