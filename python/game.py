@@ -1,4 +1,5 @@
 import datetime
+
 import numpy as np
 
 
@@ -53,6 +54,8 @@ class Game(object):
 
             self._question_rating[tour_index][question_index] -= 1
 
+            symbol = "+"
+
         elif self._results[team_index][tour_index][question_index] == 1:
             self._results[team_index][tour_index][question_index] = -1
             self._success_results[team_index][tour_index] -= 1
@@ -60,11 +63,17 @@ class Game(object):
 
             self._question_rating[tour_index][question_index] += 1
 
+            symbol = "?"
+
         else:
             self._results[team_index][tour_index][question_index] = 0
             self._disputable_results[team_index][tour_index] -= 1
 
+            symbol = "-"
+
         self.calc_rating()
+
+        return symbol
 
     def calc_rating(self):
         self._team_rating = self._question_rating * np.array(self._results == 1, dtype='int')

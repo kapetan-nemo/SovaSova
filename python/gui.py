@@ -1,7 +1,6 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 from game import Game
 
 
@@ -11,13 +10,21 @@ class MainWindow(QMainWindow):
 
         # Структура окно -> центральный виджет -> один из переключаемых виджетов -> локальный layout ->
         # локальные sublayout и widgets
-        self.setWindowTitle("SovaSova")
         self.central_widget = QStackedWidget()
         self.setCentralWidget(self.central_widget)
 
         self.initial_widget = ToursQuestWindow(self)
         self.initial_widget.button.clicked.connect(self.create_game)
         self.central_widget.addWidget(self.initial_widget)
+
+        # self.setStyleSheet("QPushButton {font: 11pt Spectral} QLabel {font: 11pt Spectral} "
+        #                    "QSpinBox {font: 11pt Spectral} QLineEdit {font: 11pt Spectral}")
+        self.setStyleSheet("QWidget {font: 11pt Spectral}")
+        # self.setStyleSheet("QWidget {font: 11pt Sans Serif}")
+
+        p = self.palette()
+        p.setColor(self.backgroundRole(), Qt.black)
+        # self.setPalette(p)
 
     def create_game(self):
         game_name = self.initial_widget.game_name_text.text()
@@ -27,7 +34,7 @@ class MainWindow(QMainWindow):
         results_widget = ResultsTable(self, game_name, tours_qnt, quest_qnt)
         self.central_widget.addWidget(results_widget)
         self.central_widget.setCurrentWidget(results_widget)
-
+        self.resize(1000, 200)
         print("Name: %s, tours: %d, questions: %d\n" % (game_name, tours_qnt, quest_qnt))
 
 
@@ -37,18 +44,21 @@ class ToursQuestWindow(QWidget):
 
         layout = QGridLayout()
 
+        self.parent().setWindowTitle("Sova x qqha")
+
         self.game_name_label = QLabel("Название игры: ")
         self.game_name_text = QLineEdit("")
 
         self.tours_label = QLabel("Количество туров: ")
         self.tours_spin = QSpinBox(self)
-        self.tours_spin.setValue(2)
+        self.tours_spin.setValue(3)
 
         self.quest_label = QLabel("Количество вопросов: ")
         self.quest_spin = QSpinBox(self)
-        self.quest_spin.setValue(2)
+        self.quest_spin.setValue(12)
 
         self.button = QPushButton('Создать игру')
+        # self.button.setFlat(True)
 
         sublayout1 = QGridLayout()
         sublayout1.addWidget(self.game_name_label, 0, 0)
@@ -67,6 +77,7 @@ class ToursQuestWindow(QWidget):
         self.setLayout(layout)
         print(layout.sizeHint())
 
+
 class ResultsTable(QWidget):
     def __init__(self, parent=None, game_name="", tours=3, questions=12):
         super(ResultsTable, self).__init__(parent)
@@ -76,6 +87,8 @@ class ResultsTable(QWidget):
         self.quest = questions
         self.game = Game(name=self.game_name, tours=self.tours, questions=self.quest)
 
+        self.parent().setWindowTitle("%s - Sova x qqha" % self.game_name)
+
         layout = QGridLayout()
 
         # создание таблицы с результатами
@@ -83,8 +96,9 @@ class ResultsTable(QWidget):
         self.table.setSelectionMode(QAbstractItemView.NoSelection)
         self.table.setColumnCount(1 + (questions + 1) * tours + 1 + 1)  # Устанавливаем  колонки
         self.table.setRowCount(0)
-        self.table.doubleClicked.connect(self.change_results)
-
+        self.table.clicked.connect(self.change_results)
+        self.table.setLineWidth(10)
+        self.table.setContentsMargins(10, 10, 10, 10)
         header = list()
         header.append("Команда")
         for k in range(0, tours):
@@ -94,12 +108,17 @@ class ResultsTable(QWidget):
         header.append("Рейтинг")
 
         self.table.setHorizontalHeaderLabels(header)
-
+        self.table.selectedIndexes()
         # Виджеты для добавления новой команды
+        # TODO: добавление команды в последнюю пустую строку таблицы по вводу названия и нажатия Enter
+        # TODO: как-то зафиксировать первый столбец при прокрутке
+        # TODO: добавить про спорные вопросы
         self.new_team_label = QLabel("Название новой команды: ")
         self.new_team_text = QLineEdit()
+        self.new_team_text.returnPressed.connect(self.add_team)
 
         self.new_team_button = QPushButton("Добавить")
+        # self.new_team_button.setFlat(True)
         self.new_team_button.clicked.connect(self.add_team)
 
         new_team_layout = QGridLayout()
@@ -111,6 +130,9 @@ class ResultsTable(QWidget):
         layout.addWidget(self.table, 0, 0)
         layout.addLayout(new_team_layout, 1, 0)
         self.setLayout(layout)
+
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.resizeColumnsToContents()
 
     def add_team(self):
         row_position = self.table.rowCount()
@@ -158,25 +180,12 @@ class ResultsTable(QWidget):
                 (divmod(current_col + 1, self.quest + 1)[1] != 0):
             local_quest = divmod(num_ques, self.quest)[1]
 
-            if self.table.item(current_row, current_col + 1).text() == "-":
-                print("minus to plus")
-                self.table.setItem(current_row, current_col + 1, QTableWidgetItem("+"))
-                self.table.item(current_row, current_col + 1).setTextAlignment(Qt.AlignCenter)
-                self.table.item(current_row, current_col + 1).setFlags(Qt.ItemIsEnabled)
-            elif self.table.item(current_row, current_col + 1).text() == "+":
-                print("plus to question")
-                self.table.setItem(current_row, current_col + 1, QTableWidgetItem("?"))
-                self.table.item(current_row, current_col + 1).setTextAlignment(Qt.AlignCenter)
-                self.table.item(current_row, current_col + 1).setFlags(Qt.ItemIsEnabled)
-            else:
-                print("question to minus")
-                self.table.setItem(current_row, current_col + 1, QTableWidgetItem("-"))
-                self.table.item(current_row, current_col + 1).setTextAlignment(Qt.AlignCenter)
-                self.table.item(current_row, current_col + 1).setFlags(Qt.ItemIsEnabled)
-
             print("col #%d, team #%d, tour #%d, ques #%d, local ques #%d" % (current_col, current_row + 1, num_tour + 1,
                                                                              num_ques + 1, local_quest + 1))
-            self.game.set_result(team_index=current_row, tour_index=num_tour, question_index=local_quest)
+            symbol = self.game.set_result(team_index=current_row, tour_index=num_tour, question_index=local_quest)
+            self.table.setItem(current_row, current_col + 1, QTableWidgetItem(symbol))
+            self.table.item(current_row, current_col + 1).setTextAlignment(Qt.AlignCenter)
+            self.table.item(current_row, current_col + 1).setFlags(Qt.ItemIsEnabled)
 
             self.show_results()
 
