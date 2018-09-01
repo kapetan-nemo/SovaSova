@@ -81,8 +81,15 @@ class Game(object):
     def get_tour_result(self, team_index, tour_index):
         return self._success_results[team_index][tour_index]
 
+    def get_tour_disput(self, team_index, tour_index):
+        return self._disputable_results[team_index][tour_index]
+
     def get_total_result(self, team_index):
         return np.sum(self._success_results[team_index])
 
+    def get_total_disput(self, team_index):
+        return np.sum(self._disputable_results[team_index])
+
     def get_rating(self, team_index):
         return np.sum(self._team_rating[team_index])
+
