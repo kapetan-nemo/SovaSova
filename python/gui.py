@@ -1,3 +1,8 @@
+# TODO: сделать новое окошечко при экспорте спорных вопросов
+# TODO: меню по правой кнопке мышки с удалением команды
+# TODO: кнопка "показывать рейтинг"
+# TODO: корректно настроить расположение виджетов в настройках
+
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -12,10 +17,10 @@ class MyTable(QTableWidget):
     def event(self, event):
         if (event.type() == QEvent.KeyPress) and (event.key() == Qt.Key_Tab):
             self.emit(pyqtSignal("tabPressed"))
-            self.emi
             return True
 
         return QTableWidget.event(self, event)
+
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -36,7 +41,7 @@ class MainWindow(QMainWindow):
         # self.setStyleSheet("QWidget {font: 11pt Sans Serif}")
 
         p = self.palette()
-        p.setColor(self.backgroundRole(), Qt.black)
+        p.setColor(self.backgroundRole(), Qt.yellow)
         # self.setPalette(p)
 
     def create_game(self):
@@ -48,6 +53,8 @@ class MainWindow(QMainWindow):
         self.central_widget.addWidget(results_widget)
         self.central_widget.setCurrentWidget(results_widget)
         self.resize(1000, 200)
+        # self.showFullScreen()
+        self.showMaximized()
         print("Name: %s, tours: %d, questions: %d\n" % (game_name, tours_qnt, quest_qnt))
 
 
@@ -126,9 +133,6 @@ class ResultsTable(QWidget):
         self.table.setHorizontalHeaderLabels(header)
         self.table.selectedIndexes()
         # Виджеты для добавления новой команды
-        # TODO: добавление команды в последнюю пустую строку таблицы по вводу названия и нажатия Enter
-        # TODO: как-то зафиксировать первый столбец при прокрутке
-        # TODO: добавить про спорные вопросы
         self.new_team_label = QLabel("Название новой команды: ")
         self.new_team_text = QLineEdit()
         self.new_team_text.returnPressed.connect(self.add_team)
@@ -142,9 +146,27 @@ class ResultsTable(QWidget):
         new_team_layout.addWidget(self.new_team_text, 0, 1)
         new_team_layout.addWidget(self.new_team_button, 0, 2)
 
+        # layout с настройками
+        settings_label = QLabel("Настройки")
+        settings_label.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+
+        export_button = QPushButton("Экспорт в .csv")
+
+        disp_results_checkbox = QCheckBox("Показывать спорные вопросы")
+        disp_results_checkbox.stateChanged.connect(self.show_disp_questions)
+        disp_results_checkbox.setChecked(True)
+
+        settings_layout = QVBoxLayout()
+        settings_layout.addWidget(settings_label, 0)
+        settings_layout.addWidget(export_button, 1)
+        settings_layout.addWidget(disp_results_checkbox, 2)
+        # settings_layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+
         # добавление на layout
-        layout.addWidget(self.table, 0, 0)
-        layout.addLayout(new_team_layout, 1, 0)
+        layout.addLayout(settings_layout, 0, 0)
+        layout.addWidget(self.table, 0, 1)
+        layout.addLayout(new_team_layout, 1, 1)
+
         self.setLayout(layout)
 
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -254,6 +276,17 @@ class ResultsTable(QWidget):
             self.table.item(team_index, self.tours * (self.quest + 2) + 3).setFlags(Qt.ItemIsEnabled)
 
         print("\n")
+
+    def show_disp_questions(self, state):
+
+        if state == Qt.Checked:
+            for k in range(0, self.tours):
+                self.table.showColumn((k + 1) * (self.quest + 2))
+            self.table.showColumn(self.tours * (self.quest + 2) + 2)
+        else:
+            for k in range(0, self.tours):
+                self.table.hideColumn((k + 1) * (self.quest + 2))
+            self.table.hideColumn(self.tours * (self.quest + 2) + 2)
 
 
 if __name__ == '__main__':
